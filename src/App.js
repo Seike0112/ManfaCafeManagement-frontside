@@ -1,26 +1,81 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
+import axios from "axios";
+import { CookiesProvider, useCookies } from "react-cookie";
 
-function App() {
+// 管理者用ページ
+const Admin = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div></div>
+  );
+};
+
+// ユーザー用ページ
+const Main = () => {
+  return (
+    <div>
     </div>
   );
-}
+};
+
+const PrivateRoute = ({
+  children,
+  isAdmin,
+  token,
+  ...rest
+}) => {
+  console.log(token, "token");
+  console.log("isAdmin", isAdmin);
+  return (
+    <Route
+      render={({ location }) =>
+        token && isAdmin === "true" ? (
+          <Route path="/admin">
+            <Admin />
+          </Route>
+        ) : token && isAdmin === "false" ? (
+          <Main />
+        ) : (
+              <Redirect
+                to={{
+                  pathname: "/login",
+                  state: { from: location },
+                }}
+              />
+            )
+      }
+    />
+  );
+};
+
+const App = () => {
+  const [tokenCookie, setTokenCookie] = useCookies(["token"]);
+  axios.defaults.baseURL = "http://localhost:3001";
+  axios.defaults.headers = {
+    "Content-Type": "application/json",
+    Authorization: `Token ${tokenCookie.token}`,
+  };
+
+  return (
+    <CookiesProvider>
+      <Router>
+        <Switch>
+          <Route path="/service/login" />
+          <Route path="/shop/login" />
+          <Route path="/login" />
+          <PrivateRoute
+            token={tokenCookie.token}
+            isAdmin={tokenCookie.is_admin}
+          />
+        </Switch>
+      </Router>
+    </CookiesProvider>
+  );
+};
 
 export default App;

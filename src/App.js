@@ -6,71 +6,77 @@ import {
   Redirect,
 } from "react-router-dom";
 import axios from "axios";
+import {
+  LoginPage
+} from './components/pages'
 import { CookiesProvider, useCookies } from "react-cookie";
 
-// 管理者用ページ
-const Admin = () => {
-  return (
-    <div></div>
-  );
-};
 
 // ユーザー用ページ
 const Main = () => {
   return (
     <div>
+      メイン画面です。
     </div>
   );
 };
 
+// ログインページ制御
 const PrivateRoute = ({
   children,
-  isAdmin,
   token,
   ...rest
 }) => {
-  console.log(token, "token");
-  console.log("isAdmin", isAdmin);
+  const [tokenCookie] = useCookies(["token", "position"]);
+  console.log("PrivateRoute内position", tokenCookie.position);
   return (
     <Route
       render={({ location }) =>
-        token && isAdmin === "true" ? (
-          <Route path="/admin">
-            <Admin />
+        token && tokenCookie.position === "service" ? (
+          <Route path="/service">
+
           </Route>
-        ) : token && isAdmin === "false" ? (
-          <Main />
-        ) : (
-              <Redirect
-                to={{
-                  pathname: "/login",
-                  state: { from: location },
-                }}
-              />
-            )
+        ) :
+          token && tokenCookie.position === "shop" ? (
+            <Route path="/shop">
+
+            </Route>
+          ) :
+            token && tokenCookie.position === "owner" ? (
+              <Main />
+            ) : (
+                <Redirect
+                  to={{
+                    pathname: "/login",
+                    state: { from: location },
+                  }}
+                />
+              )
       }
     />
-  );
-};
+  )
+}
 
 const App = () => {
-  const [tokenCookie, setTokenCookie] = useCookies(["token"]);
+  const [tokenCookie] = useCookies(["token", "position"]);
   axios.defaults.baseURL = "http://localhost:3001";
   axios.defaults.headers = {
     "Content-Type": "application/json",
     Authorization: `Token ${tokenCookie.token}`,
   };
+  console.log("tokenCookie内容", tokenCookie)
 
   return (
     <CookiesProvider>
       <Router>
         <Switch>
-          <Route path="/service/login" />
-          <Route path="/shop/login" />
-          <Route path="/login" />
+          <Route path="/user/login" />
+          <Route path="/admin/login" />
+          {/* <Route path="/owner/login" component={LoginPage} /> */}
+          <Route path="/login" component={LoginPage} />
           <PrivateRoute
             token={tokenCookie.token}
-            isAdmin={tokenCookie.is_admin}
+            position={tokenCookie.position}
           />
         </Switch>
       </Router>
